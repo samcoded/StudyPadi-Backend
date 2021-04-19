@@ -1,0 +1,28 @@
+
+POST http://localhost:3021/api/user/register HTTP/1.1
+Content-Type: application/json
+
+{ "firstname": "admin", "lastname":"adm", "email": "hello@admin.com", "password":"admin", "institution":"unilag","course":"bch"}
+
+###
+POST http://localhost:3021/api/user/login
+Content-Type: application/json
+
+{ "email": "hello@admin.com", "password":"admin"}
+
+
+###
+GET http://localhost:3021/
+
+###
+GET http://localhost:3021/api/user/ HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGFkbWluLmNvbSIsImlkIjoiNjA3ZTAwZmViZTVhYmEyYTg0NjZmNmM0IiwiaWF0IjoxNjE4ODcwOTQ1LCJleHAiOjE2MTg4NzQ1NDV9.TH3mlOhQiqos2kTJESvACgSqBU8lKx6lw1ujQws538A
+
+###
+
+PATCH http://localhost:3021/api/user HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGFkbWluLmNvbSIsImlkIjoiNjA3ZTAwZmViZTVhYmEyYTg0NjZmNmM0IiwiaWF0IjoxNjE4ODcwOTQ1LCJleHAiOjE2MTg4NzQ1NDV9.TH3mlOhQiqos2kTJESvACgSqBU8lKx6lw1ujQws538A
+
+{ "firstname": "admin", "lastname":"studypadi", "email": "hello@admin.com", "password":"admin", "institution":"unilag","course":"bch"}

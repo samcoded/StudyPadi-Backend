@@ -1,0 +1,64 @@
+
+POST http://localhost:3021/api/user/607df0938c471914e0267aad HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGFkbWluLmNvbSIsImlkIjoiNjA3ZGYwOTM4YzQ3MTkxNGUwMjY3YWFkIiwiaWF0IjoxNjE4ODY2MzIzLCJleHAiOjE2MTg4Njk5MjN9.LBfRC_FZkaqSjgzoImZOjM4CJZ6fNuOaEkXaG1_YiWM
+
+###
+
+POST http://localhost:3021/api/task HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGFkbWluLmNvbSIsImlkIjoiNjA3ZTAwZmViZTVhYmEyYTg0NjZmNmM0IiwiaWF0IjoxNjE4ODcwOTQ1LCJleHAiOjE2MTg4NzQ1NDV9.TH3mlOhQiqos2kTJESvACgSqBU8lKx6lw1ujQws538A
+
+{
+    "taskname": "hello 4 first task",
+    "description": "describinggg",
+    "date": "today na",
+    "starttime": "start ing",
+    "endtime": "end timr"
+}
+###
+PATCH http://localhost:3021/api/task/607e04e5e4ed032f44868093 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGFkbWluLmNvbSIsImlkIjoiNjA3ZTAwZmViZTVhYmEyYTg0NjZmNmM0IiwiaWF0IjoxNjE4ODcwOTQ1LCJleHAiOjE2MTg4NzQ1NDV9.TH3mlOhQiqos2kTJESvACgSqBU8lKx6lw1ujQws538A
+
+{
+    "taskname": "hello update 4 first task",
+    "description": "describinggg",
+    "date": "today na",
+    "starttime": "start ing",
+    "endtime": "end timr"
+}
+###
+
+DELETE http://localhost:3021/api/task/607df71eb962d62828100675 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGFkbWluLmNvbSIsImlkIjoiNjA3ZGYwOTM4YzQ3MTkxNGUwMjY3YWFkIiwiaWF0IjoxNjE4ODY3NzAxLCJleHAiOjE2MTg4NzEzMDF9.Y_D4lrEYwP9skfJB_hAuTvQVwcZnf6QuWc1YFMJ5iVs
+
+###
+
+GET http://localhost:3021/api/task/607dfa20e34af72a9caf3100 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGFkbWluLmNvbSIsImlkIjoiNjA3ZGYwOTM4YzQ3MTkxNGUwMjY3YWFkIiwiaWF0IjoxNjE4ODY3NzAxLCJleHAiOjE2MTg4NzEzMDF9.Y_D4lrEYwP9skfJB_hAuTvQVwcZnf6QuWc1YFMJ5iVs
+
+
+###
+GET http://localhost:3021/api/task/ HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGFkbWluLmNvbSIsImlkIjoiNjA3ZGYwOTM4YzQ3MTkxNGUwMjY3YWFkIiwiaWF0IjoxNjE4ODY3NzAxLCJleHAiOjE2MTg4NzEzMDF9.Y_D4lrEYwP9skfJB_hAuTvQVwcZnf6QuWc1YFMJ5iVs
+
+
+###
+POST http://localhost:3021/api/user/register HTTP/1.1
+Content-Type: application/json
+
+{ "name": "admin", "email": "hello@admin.com", "password":"admin"}
+
+###
+POST http://localhost:3021/api/user/login
+Content-Type: application/json
+
+{ "email": "hello@admin.com", "password":"admin"}
+
+
+###
+GET http://localhost:3021/
