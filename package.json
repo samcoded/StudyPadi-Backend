@@ -1,5 +1,5 @@
 {
-  "name": "STUDYPADI",
+  "name": "studypadi",
   "version": "1.0.0",
   "description": "MYSTUDYPADI backend server api",
   "main": "index.js",
