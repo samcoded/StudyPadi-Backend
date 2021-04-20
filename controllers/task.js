@@ -99,6 +99,41 @@ const updateTask = async (req, res) => {
   // res.json(updatedtask);
 };
 
+const checkTask = async (req, res) => {
+  const { id } = req.params;
+  const { userId } = req;
+  const updatedTask = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res.status(404).send(`No task with id: ${id}`);
+
+  try {
+    const task = await TaskModel.findById(id);
+    if (task.userId != userId) {
+      res.status(404).json({ message: "Invalid request" });
+    } else {
+      try {
+        let check = !task.completed;
+
+        await TaskModel.findByIdAndUpdate(
+          id,
+          {
+            completed: check,
+          },
+          { new: true },
+          (err, data) => {
+            res.status(200).json(data);
+          }
+        );
+      } catch (error) {
+        res.status(404).json({ message: error.message });
+      }
+    }
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};
+
 const deleteTask = async (req, res) => {
   const { id } = req.params;
   const { userId } = req;
@@ -128,4 +163,5 @@ module.exports = {
   createTask,
   updateTask,
   deleteTask,
+  checkTask,
 };
