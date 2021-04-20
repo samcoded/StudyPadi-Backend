@@ -9,11 +9,11 @@ const upload = require("../middlewares/profileUpload.js");
 const jwtsecret = process.env.JWTSECRET;
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { emailAddress, password } = req.body;
 
   //validate
   const loginschema = Joi.object().keys({
-    email: Joi.string().email().required(),
+    emailAddress: Joi.string().email().required(),
     password: Joi.string().required(),
   });
 
@@ -24,13 +24,13 @@ const login = async (req, res) => {
   }
 
   try {
-    const oldUser = await UserModel.findOne({ email });
+    const oldUser = await UserModel.findOne({ emailAddress });
     if (!oldUser) return res.status(400).send("This user doesnt exist");
     const isPasswordCorrect = await bcrypt.compare(password, oldUser.password);
     if (!isPasswordCorrect)
       return res.status(400).json({ message: "Invalid credentials" });
     const token = jwt.sign(
-      { email: oldUser.email, id: oldUser._id },
+      { emailAddress: oldUser.emailAddress, id: oldUser._id },
       jwtsecret,
       { expiresIn: "1h" }
     );
@@ -44,18 +44,18 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
   const {
-    firstname,
-    lastname,
-    email,
+    firstName,
+    lastName,
+    emailAddress,
     password,
     institution,
     course,
   } = req.body;
 
   const regschema = Joi.object().keys({
-    firstname: Joi.string().required(),
-    lastname: Joi.string().required(),
-    email: Joi.string().email().required(),
+    firstName: Joi.string().required(),
+    lastName: Joi.string().required(),
+    emailAddress: Joi.string().email().required(),
     password: Joi.string().required(),
     institution: Joi.string(),
     course: Joi.string(),
@@ -68,20 +68,25 @@ const register = async (req, res) => {
   }
 
   try {
-    const oldUser = await UserModel.findOne({ email });
+    const oldUser = await UserModel.findOne({ emailAddress });
     if (oldUser) return res.status(400).send("This user already exists");
     const hashedPassword = await bcrypt.hash(password, 12);
     const result = await UserModel.create({
-      email,
+      emailAddress,
       password: hashedPassword,
-      firstname,
-      lastname,
+      firstName,
+      lastName,
       institution,
       course,
+      timestamp: new Date().toISOString(),
     });
-    const token = jwt.sign({ email: result.email, id: result._id }, jwtsecret, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { emailAddress: result.emailAddress, id: result._id },
+      jwtsecret,
+      {
+        expiresIn: "1h",
+      }
+    );
     res.status(201).json({ token, id: result._id });
   } catch (error) {
     res.status(500).json({ message: "Something went wrong" });
@@ -99,21 +104,23 @@ const getUser = async (req, res) => {
   try {
     const user = await UserModel.findById(id);
     const {
-      email,
-      firstname,
-      lastname,
+      emailAddress,
+      firstName,
+      lastName,
       institution,
       course,
-      profilePicture,
+      photoUrl,
+      timestamp,
       _id,
     } = user;
     const userdetails = {
-      email,
-      firstname,
-      lastname,
+      emailAddress,
+      firstName,
+      lastName,
       institution,
       course,
-      profilePicture,
+      photoUrl,
+      timestamp,
       _id,
     };
     res.status(200).json(userdetails);
@@ -124,24 +131,42 @@ const getUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   const id = req.userId;
-  const { email, firstname, lastname, institution, course } = req.body;
+  const updatedUser = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No user with id: ${id}`);
+    return res.status(404).send(`No task with id: ${id}`);
 
-  const updateduser = {
-    email,
-    firstname,
-    lastname,
-    institution,
-    course,
-    _id: id,
-  };
   try {
-    await UserModel.findByIdAndUpdate(id, updateduser, { new: true });
-    res.json(updateduser);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    await UserModel.findByIdAndUpdate(
+      id,
+      updatedUser,
+      { new: true },
+      (err, data) => {
+        const {
+          emailAddress,
+          firstName,
+          lastName,
+          institution,
+          course,
+          photoUrl,
+          timestamp,
+          _id,
+        } = data;
+        const userdetails = {
+          emailAddress,
+          firstName,
+          lastName,
+          institution,
+          course,
+          photoUrl,
+          timestamp,
+          _id,
+        };
+        res.status(200).json(userdetails);
+      }
+    );
+  } catch (error) {
+    res.status(404).json({ message: error.message });
   }
 };
 
@@ -154,15 +179,13 @@ const uploadProfilePic = async (req, res) => {
       return res.status(400).json({ error: err.message });
     }
 
-    let update = { profilePicture: req.file.location };
+    let update = { photoUrl: req.file.location };
     try {
       await UserModel.findByIdAndUpdate(id, update, { new: true });
       res.status(200).json(update);
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
-    // .then((user) => res.status(200).json({ user }))
-    // .catch((err) => res.status(400).json({ error: err.message }));
   });
 };
 

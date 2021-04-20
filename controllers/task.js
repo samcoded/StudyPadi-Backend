@@ -38,11 +38,11 @@ const createTask = async (req, res) => {
   const task = req.body;
   //validate
   const taskschema = Joi.object().keys({
-    taskname: Joi.string().required(),
+    name: Joi.string().required(),
     description: Joi.string().required(),
     date: Joi.string().required(),
-    starttime: Joi.string().required(),
-    endtime: Joi.string().required(),
+    startTime: Joi.string().required(),
+    endTime: Joi.string().required(),
   });
 
   try {
@@ -53,7 +53,8 @@ const createTask = async (req, res) => {
   const newtask = new TaskModel({
     ...task,
     userId: req.userId,
-    createdAt: new Date().toISOString(),
+    timestamp: new Date().toISOString(),
+    completed: false,
   });
 
   try {
@@ -68,41 +69,10 @@ const createTask = async (req, res) => {
 const updateTask = async (req, res) => {
   const { id } = req.params;
   const { userId } = req;
-  const { taskname, description, date, starttime, endtime } = req.body;
+  const updatedTask = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
     return res.status(404).send(`No task with id: ${id}`);
-
-  const updatedTask = {
-    taskname,
-    description,
-    date,
-    starttime,
-    endtime,
-    userId,
-    _id: id,
-  };
-
-  //validate
-  const taskschema = Joi.object().keys({
-    taskname: Joi.string().required(),
-    description: Joi.string().required(),
-    date: Joi.string().required(),
-    starttime: Joi.string().required(),
-    endtime: Joi.string().required(),
-  });
-
-  try {
-    await taskschema.validateAsync({
-      taskname,
-      description,
-      date,
-      starttime,
-      endtime,
-    });
-  } catch (error) {
-    return res.status(400).send(error);
-  }
 
   try {
     const task = await TaskModel.findById(id);
@@ -110,8 +80,14 @@ const updateTask = async (req, res) => {
       res.status(404).json({ message: "Invalid request" });
     } else {
       try {
-        await TaskModel.findByIdAndUpdate(id, updatedTask, { new: true });
-        res.status(200).json(updatedTask);
+        await TaskModel.findByIdAndUpdate(
+          id,
+          updatedTask,
+          { new: true },
+          (err, data) => {
+            res.status(200).json(data);
+          }
+        );
       } catch (error) {
         res.status(404).json({ message: error.message });
       }
