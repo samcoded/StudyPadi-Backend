@@ -6,6 +6,7 @@ const timetableSchema = mongoose.Schema({
   userId: { type: String, required: true },
   startTime: { type: String, required: true },
   endTime: { type: String, required: true },
+  subject: { type: String, required: true },
   timestamp: { type: String, required: true },
   id: { type: String },
 });

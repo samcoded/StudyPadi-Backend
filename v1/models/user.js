@@ -10,6 +10,7 @@ const userSchema = mongoose.Schema({
   course: { type: String },
   photoUrl: { type: String },
   timestamp: { type: String, required: true },
+  badges: { type: Array },
 });
 
 module.exports = mongoose.model("User", userSchema);

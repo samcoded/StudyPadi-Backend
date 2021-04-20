@@ -42,6 +42,7 @@ const createTimetable = async (req, res) => {
     location: Joi.string().required(),
     startTime: Joi.string().required(),
     endTime: Joi.string().required(),
+    subject: Joi.string().required(),
   });
 
   try {

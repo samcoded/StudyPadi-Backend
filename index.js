@@ -2,29 +2,17 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const userRouter = require("./routes/user");
-const taskRouter = require("./routes/task");
-const timetableRouter = require("./routes/timetable");
-// const schedulerouter = require("./routes/schedule");
-// const goalrouter = require("./routes/goal");
-// const badgerouter = require("./routes/badge");
-const home = require("./controllers/home");
-
 const app = express();
 dotenv.config();
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());
 
-//Routes
-app.get("/api", home);
-app.use("/api/user", userRouter);
-app.use("/api/task", taskRouter);
-app.use("/api/timetable", timetableRouter);
-// app.use("/api/schedule", schedulerouter);
-// app.use("/api/goal", goalrouter);
-// app.use("/api/badge", badgerouter);
+//API version 1
+const apiv1 = require("./v1/index");
+app.use("/api/v1", apiv1);
 
+//database connection
 const CONNECTION_URL = process.env.MONGOURL;
 const PORT = process.env.PORT || 5000;
 
@@ -35,6 +23,7 @@ mongoose
 
 mongoose.set("useFindAndModify", false);
 
+//server listen
 app.listen(PORT, () =>
   console.log(`Server Running on Port: http://localhost:${PORT}`)
 );
