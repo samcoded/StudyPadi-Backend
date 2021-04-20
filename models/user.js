@@ -8,7 +8,7 @@ const userSchema = mongoose.Schema({
   id: { type: String },
   institution: { type: String },
   course: { type: String },
-  avatar: { type: String },
+  profilePicture: { type: String },
 });
 
 module.exports = mongoose.model("User", userSchema);

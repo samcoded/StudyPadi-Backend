@@ -2,25 +2,24 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const bodyparser = require("body-parser");
-const userrouter = require("./routes/user");
-const taskrouter = require("./routes/task");
-const timetablerouter = require("./routes/timetable");
-const schedulerouter = require("./routes/schedule");
-const goalrouter = require("./routes/goal");
-const badgerouter = require("./routes/badge");
+const userRouter = require("./routes/user");
+const taskRouter = require("./routes/task");
+// const timetablerouter = require("./routes/timetable");
+// const schedulerouter = require("./routes/schedule");
+// const goalrouter = require("./routes/goal");
+// const badgerouter = require("./routes/badge");
 const home = require("./controllers/home");
 
 const app = express();
 dotenv.config();
-app.use(bodyparser.json({ limit: "30mb", extended: true }));
-app.use(bodyparser.urlencoded({ limit: "30mb", extended: true }));
+app.use(express.json({ limit: "30mb", extended: true }));
+app.use(express.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());
 
 //Routes
 app.get("/api", home);
-app.use("/api/user", userrouter);
-app.use("/api/task", taskrouter);
+app.use("/api/user", userRouter);
+app.use("/api/task", taskRouter);
 // app.use("/api/timetable", timetablerouter);
 // app.use("/api/schedule", schedulerouter);
 // app.use("/api/goal", goalrouter);

@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const taskSchema = mongoose.Schema({
   taskname: { type: String, required: true },
   description: { type: String, required: true },
-  userId: { type: String },
+  userId: { type: String, required: true },
   date: { type: String, required: true },
   starttime: { type: String, required: true },
   endtime: { type: String, required: true },

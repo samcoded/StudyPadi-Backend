@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const jwtsecret = process.env.JWTSECRET;
 
-const verifytoken = async (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
     let decodedtoken;
@@ -17,4 +17,4 @@ const verifytoken = async (req, res, next) => {
   }
 };
 
-module.exports = { verifytoken };
+module.exports = { verifyToken };

@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const Joi = require("joi");
 const mongoose = require("mongoose");
 require("dotenv").config();
+const upload = require("../middlewares/profileUpload.js");
 
 const jwtsecret = process.env.JWTSECRET;
 
@@ -89,7 +90,7 @@ const register = async (req, res) => {
   }
 };
 
-const getuser = async (req, res) => {
+const getUser = async (req, res) => {
   const id = req.userId;
 
   if (!mongoose.Types.ObjectId.isValid(id))
@@ -97,13 +98,22 @@ const getuser = async (req, res) => {
 
   try {
     const user = await UserModel.findById(id);
-    const { email, firstname, lastname, institution, course, _id } = user;
+    const {
+      email,
+      firstname,
+      lastname,
+      institution,
+      course,
+      profilePicture,
+      _id,
+    } = user;
     const userdetails = {
       email,
       firstname,
       lastname,
       institution,
       course,
+      profilePicture,
       _id,
     };
     res.status(200).json(userdetails);
@@ -112,7 +122,7 @@ const getuser = async (req, res) => {
   }
 };
 
-const updateuser = async (req, res) => {
+const updateUser = async (req, res) => {
   const id = req.userId;
   const { email, firstname, lastname, institution, course } = req.body;
 
@@ -127,10 +137,33 @@ const updateuser = async (req, res) => {
     course,
     _id: id,
   };
-
-  await UserModel.findByIdAndUpdate(id, updateduser, { new: true });
-
-  res.json(updateduser);
+  try {
+    await UserModel.findByIdAndUpdate(id, updateduser, { new: true });
+    res.json(updateduser);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
-module.exports = { login, register, getuser, updateuser };
+const uploadProfilePic = async (req, res) => {
+  const id = req.userId;
+  const singleUpload = upload.single("image");
+
+  singleUpload(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    let update = { profilePicture: req.file.location };
+    try {
+      await UserModel.findByIdAndUpdate(id, update, { new: true });
+      res.status(200).json(update);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+    // .then((user) => res.status(200).json({ user }))
+    // .catch((err) => res.status(400).json({ error: err.message }));
+  });
+};
+
+module.exports = { login, register, getUser, updateUser, uploadProfilePic };
