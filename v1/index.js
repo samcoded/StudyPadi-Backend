@@ -7,16 +7,14 @@ const taskRouter = require("./routes/task");
 const timetableRouter = require("./routes/timetable");
 const scheduleRouter = require("./routes/schedule");
 const studygoalRouter = require("./routes/studygoal");
-// const badgeRouter = require("./routes/badge");
-const home = require("./controllers/home");
+const welcome = require("./controllers/welcome");
 
 //Routes
-router.get("/", home);
+router.get("/", welcome);
 router.use("/user", userRouter);
 router.use("/task", taskRouter);
 router.use("/timetable", timetableRouter);
 router.use("/schedule", scheduleRouter);
 router.use("/studygoal", studygoalRouter);
-// router.use("/badge", badgerouter);
 
 module.exports = router;
