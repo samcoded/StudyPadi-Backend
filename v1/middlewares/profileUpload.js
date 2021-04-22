@@ -36,7 +36,6 @@ const profileUpload = multer({
         ((fileName.lastIndexOf(".") - 1) >>> 0) + 2
       );
       const newFileName = Date.now().toString() + "." + fileExt;
-      console.log(newFileName);
       cb(null, newFileName);
     },
   }),
