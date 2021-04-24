@@ -1,72 +1,110 @@
-// const passport = require("passport");
-// const { googlePassport, facebookPassport } = require("../middlewares/auth.js");
+// import all the things we need
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const FacebookStrategy = require("passport-facebook").Strategy;
+require("dotenv").config();
+const crypto = require("crypto");
+const UserModel = require("../models/user");
+const login = require("../services/user/login");
+const register = require("../services/user/register");
 
-// // Passport config
-// googlePassport();
-// facebookPassport();
+const googlePassport = (passport) => {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: process.env.GOOGLE_CALLBACK_URL,
+        profileFields: ["id", "displayName", "photos", "email"],
+      },
+      function (accessToken, refreshToken, user, cb) {
+        return cb(null, user);
+      }
+    )
+  );
+};
 
-// // passport.serializeUser(function (user, cb) {
-// //   cb(null, user);
-// // });
+const facebookPassport = (passport) => {
+  passport.use(
+    new FacebookStrategy(
+      {
+        clientID: process.env.FACEBOOK_CLIENT_ID,
+        clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+        callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+        profileFields: ["id", "displayName", "photos", "email"],
+      },
+      function (accessToken, refreshToken, user, cb) {
+        return cb(null, user);
+      }
+    )
+  );
+};
 
-// // passport.deserializeUser(function (obj, cb) {
-// //   cb(null, obj);
-// // });
+const googleProcessData = async (req, res) => {
+  const data = req.user._json;
+  const firstName = data.given_name;
+  const lastName = data.family_name;
+  const emailAddress = data.email;
 
-// const googleAuth = () => {
-//   passport.authenticate("google", {
-//     scope: ["https://www.googleapis.com/auth/plus.login"],
-//   });
-// };
+  try {
+    const oldUser = await UserModel.findOne({ emailAddress });
+    if (oldUser) {
+      let result = await login(oldUser.emailAddress, null);
+      res.status(result.code).json({
+        success: result.success,
+        message: result.message,
+        data: result.data,
+      });
+    }
 
-// const googleAuthCallback = () => {
-//   passport.authenticate("google", {
-//     failureRedirect: "/error",
-//   }),
-//     (req, res) => {
-//       res.redirect("/data");
-//     };
-// };
-// const facebookAuth = () => {
-//   passport.authenticate("facebook");
-// };
-
-// const facebookAuthCallback = () => {
-//   passport.authenticate("facebook", {
-//     failureRedirect: "/error",
-//   }),
-//     (req, res) => {
-//       res.redirect("/data");
-//     };
-// };
-
-const processData = async (type, data) => {
-  if (!data) return false;
-  if (type == "facebook") {
-    const name = data.name;
-    const firstName = name.split(" ")[0];
-    const lastName = name.split(" ")[1];
-    const emailAddress = data.email;
-    return { firstName, lastName, emailAddress };
-  } else if (type == "google") {
-    const firstName = data.given_name;
-    const lastName = data.family_name;
-    const emailAddress = data.email;
-    return { firstName, lastName, emailAddress };
-  } else {
-    return false;
+    const password = crypto.randomBytes(5).toString("hex");
+    let result = await register(firstName, lastName, emailAddress, password);
+    res.status(result.code).json({
+      success: result.success,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
-const processError = async (req, res) => {
-  res.send("error");
+const facebookProcessData = async (req, res) => {
+  const data = req.user._json;
+  const name = data.name;
+  const firstName = name.split(" ")[0];
+  const lastName = name.split(" ")[1];
+  const emailAddress = data.email;
+
+  try {
+    const oldUser = await UserModel.findOne({ emailAddress });
+    if (oldUser) {
+      let result = await login(oldUser.emailAddress, null);
+      res.status(result.code).json({
+        success: result.success,
+        message: result.message,
+        data: result.data,
+      });
+    }
+
+    const password = crypto.randomBytes(5).toString("hex");
+    let result = await register(firstName, lastName, emailAddress, password);
+    res.status(result.code).json({
+      success: result.success,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: error.message, data: {} });
+  }
 };
 
 module.exports = {
-  // googleAuth,
-  // googleAuthCallback,
-  // facebookAuth,
-  // facebookAuthCallback,
-  processData,
-  processError,
+  googlePassport,
+  facebookPassport,
+  googleProcessData,
+  facebookProcessData,
 };

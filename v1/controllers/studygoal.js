@@ -7,10 +7,15 @@ const getStudygoals = async (req, res) => {
 
   try {
     const studygoal = await StudygoalModel.find({ userId });
-
-    res.status(200).json(studygoal);
+    return res.status(200).json({
+      success: true,
+      message: "User studygoals retrieved",
+      data: { studygoal },
+    });
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -21,16 +26,26 @@ const getStudygoal = async (req, res) => {
   const { userId } = req;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No Studygoal with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const studygoal = await StudygoalModel.findById(id);
     if (studygoal.userId != userId) {
-      res.status(404).json({ message: "Invalid request" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
     } else {
-      res.status(200).json(studygoal);
+      return res.status(200).json({
+        success: 200,
+        message: "Studygoal details retrieved",
+        data: { studygoal },
+      });
     }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -45,8 +60,11 @@ const createStudygoal = async (req, res) => {
   try {
     await studygoalschema.validateAsync(studygoal);
   } catch (error) {
-    return res.status(400).send(error);
+    return res
+      .status(400)
+      .json({ success: false, message: error.message, data: {} });
   }
+
   const newstudygoal = new StudygoalModel({
     ...studygoal,
     userId: req.userId,
@@ -57,9 +75,15 @@ const createStudygoal = async (req, res) => {
   try {
     await newstudygoal.save();
 
-    res.status(201).json(newstudygoal);
+    return res.status(200).json({
+      success: true,
+      message: "Studygoal created",
+      data: { newstudygoal },
+    });
   } catch (error) {
-    res.status(409).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -69,12 +93,16 @@ const updateStudygoal = async (req, res) => {
   const updatedStudygoal = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No Studygoal with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
 
   try {
     const studygoal = await StudygoalModel.findById(id);
     if (studygoal.userId != userId) {
-      res.status(404).json({ message: "Invalid request" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       try {
         await StudygoalModel.findByIdAndUpdate(
@@ -82,15 +110,68 @@ const updateStudygoal = async (req, res) => {
           updatedStudygoal,
           { new: true },
           (err, data) => {
-            res.status(200).json(data);
+            return res.status(200).json({
+              success: true,
+              message: "Studygoal Updated",
+              data: { data },
+            });
           }
         );
       } catch (error) {
-        res.status(404).json({ message: error.message });
+        return res
+          .status(404)
+          .json({ success: false, message: error.message, data: {} });
       }
     }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
+  }
+};
+
+const checkStudygoal = async (req, res) => {
+  const { id } = req.params;
+  const { userId } = req;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
+  try {
+    const studygoal = await StudygoalModel.findById(id);
+    if (studygoal.userId != userId) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
+    } else {
+      try {
+        let check = !studygoal.completed;
+
+        await StudygoalModel.findByIdAndUpdate(
+          id,
+          {
+            completed: check,
+          },
+          { new: true },
+          (err, data) => {
+            return res.status(200).json({
+              success: true,
+              message: "Studygoal checked",
+              data: { data },
+            });
+          }
+        );
+      } catch (error) {
+        return res
+          .status(404)
+          .json({ success: false, message: error.message, data: {} });
+      }
+    }
+  } catch (error) {
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -99,21 +180,33 @@ const deleteStudygoal = async (req, res) => {
   const { userId } = req;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No Studygoal with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const studygoal = await StudygoalModel.findById(id);
     if (studygoal.userId != userId) {
-      res.status(404).json({ message: "Invalid request" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       try {
         await StudygoalModel.findByIdAndRemove(id);
-        res.status(200).json({ message: "Studygoal deleted successfully." });
+        return res.status(200).json({
+          success: true,
+          message: "Studygoal deleted successfully",
+          data: {},
+        });
       } catch (error) {
-        res.status(404).json({ message: error.message });
+        return res
+          .status(404)
+          .json({ success: false, message: error.message, data: {} });
       }
     }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -122,5 +215,6 @@ module.exports = {
   getStudygoal,
   createStudygoal,
   updateStudygoal,
+  checkStudygoal,
   deleteStudygoal,
 };

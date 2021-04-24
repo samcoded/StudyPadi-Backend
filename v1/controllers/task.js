@@ -8,9 +8,15 @@ const getTasks = async (req, res) => {
   try {
     const task = await TaskModel.find({ userId });
 
-    res.status(200).json(task);
+    return res.status(200).json({
+      success: true,
+      message: "User tasks retrieved",
+      data: { task },
+    });
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -21,16 +27,26 @@ const getTask = async (req, res) => {
   const { userId } = req;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No Task with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const task = await TaskModel.findById(id);
     if (task.userId != userId) {
-      res.status(404).json({ message: "Invalid request" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
     } else {
-      res.status(200).json(task);
+      return res.status(200).json({
+        success: 200,
+        message: "Task details retrieved",
+        data: { task },
+      });
     }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -48,7 +64,9 @@ const createTask = async (req, res) => {
   try {
     await taskschema.validateAsync(task);
   } catch (error) {
-    return res.status(400).send(error);
+    return res
+      .status(400)
+      .json({ success: false, message: error.message, data: {} });
   }
   const newtask = new TaskModel({
     ...task,
@@ -59,10 +77,15 @@ const createTask = async (req, res) => {
 
   try {
     await newtask.save();
-
-    res.status(201).json(newtask);
+    return res.status(200).json({
+      success: true,
+      message: "Task created",
+      data: { newtask },
+    });
   } catch (error) {
-    res.status(409).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -72,12 +95,16 @@ const updateTask = async (req, res) => {
   const updatedTask = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No task with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
 
   try {
     const task = await TaskModel.findById(id);
     if (task.userId != userId) {
-      res.status(404).json({ message: "Invalid request" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       try {
         await TaskModel.findByIdAndUpdate(
@@ -85,32 +112,40 @@ const updateTask = async (req, res) => {
           updatedTask,
           { new: true },
           (err, data) => {
-            res.status(200).json(data);
+            return res.status(200).json({
+              success: true,
+              message: "Task Updated",
+              data: { data },
+            });
           }
         );
       } catch (error) {
-        res.status(404).json({ message: error.message });
+        return res
+          .status(404)
+          .json({ success: false, message: error.message, data: {} });
       }
     }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
-
-  // res.json(updatedtask);
 };
 
 const checkTask = async (req, res) => {
   const { id } = req.params;
   const { userId } = req;
-  const updatedTask = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No task with id: ${id}`);
-
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const task = await TaskModel.findById(id);
     if (task.userId != userId) {
-      res.status(404).json({ message: "Invalid request" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       try {
         let check = !task.completed;
@@ -122,15 +157,23 @@ const checkTask = async (req, res) => {
           },
           { new: true },
           (err, data) => {
-            res.status(200).json(data);
+            return res.status(200).json({
+              success: true,
+              message: "Task checked",
+              data: { data },
+            });
           }
         );
       } catch (error) {
-        res.status(404).json({ message: error.message });
+        return res
+          .status(404)
+          .json({ success: false, message: error.message, data: {} });
       }
     }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -139,21 +182,33 @@ const deleteTask = async (req, res) => {
   const { userId } = req;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No task with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const task = await TaskModel.findById(id);
     if (task.userId != userId) {
-      res.status(404).json({ message: "Invalid request" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       try {
         await TaskModel.findByIdAndRemove(id);
-        res.status(200).json({ message: "task deleted successfully." });
+        return res.status(200).json({
+          success: true,
+          message: "Task deleted successfully",
+          data: {},
+        });
       } catch (error) {
-        res.status(404).json({ message: error.message });
+        return res
+          .status(404)
+          .json({ success: false, message: error.message, data: {} });
       }
     }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -162,6 +217,6 @@ module.exports = {
   getTask,
   createTask,
   updateTask,
-  deleteTask,
   checkTask,
+  deleteTask,
 };

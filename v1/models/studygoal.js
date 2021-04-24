@@ -6,6 +6,7 @@ const studygoalSchema = mongoose.Schema({
   date: { type: String, required: true },
   timestamp: { type: String, required: true },
   id: { type: String },
+  completed: { type: Boolean, required: true },
 });
 
 module.exports = mongoose.model("Studygoal", studygoalSchema);

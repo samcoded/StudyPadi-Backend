@@ -5,8 +5,8 @@ const {
   getTask,
   createTask,
   updateTask,
-  deleteTask,
   checkTask,
+  deleteTask,
 } = require("../controllers/task.js");
 const { verifyToken } = require("../middlewares/verifyToken");
 

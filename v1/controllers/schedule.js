@@ -8,29 +8,45 @@ const getSchedules = async (req, res) => {
   try {
     const schedule = await ScheduleModel.find({ userId });
 
-    res.status(200).json(schedule);
+    return res.status(200).json({
+      success: true,
+      message: "User schedules retrieved",
+      data: { schedule },
+    });
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
 const getSchedule = async (req, res) => {
   const { id } = req.params;
 
-  // check if requested user is also owner of Schedule
+  // check if requested user is also owner of schedule
   const { userId } = req;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No Schedule with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const schedule = await ScheduleModel.findById(id);
     if (schedule.userId != userId) {
-      res.status(404).json({ message: "Invalid request" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
     } else {
-      res.status(200).json(schedule);
+      return res.status(200).json({
+        success: 200,
+        message: "Schedule details retrieved",
+        data: { schedule },
+      });
     }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -46,21 +62,27 @@ const createSchedule = async (req, res) => {
   try {
     await scheduleschema.validateAsync(schedule);
   } catch (error) {
-    return res.status(400).send(error);
+    return res
+      .status(400)
+      .json({ success: false, message: error.message, data: {} });
   }
   const newschedule = new ScheduleModel({
     ...schedule,
     userId: req.userId,
     timestamp: new Date().toISOString(),
-    completed: false,
   });
 
   try {
     await newschedule.save();
-
-    res.status(201).json(newschedule);
+    return res.status(200).json({
+      success: true,
+      message: "Schedule created",
+      data: { newschedule },
+    });
   } catch (error) {
-    res.status(409).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -70,12 +92,16 @@ const updateSchedule = async (req, res) => {
   const updatedSchedule = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No Schedule with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
 
   try {
     const schedule = await ScheduleModel.findById(id);
     if (schedule.userId != userId) {
-      res.status(404).json({ message: "Invalid request" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       try {
         await ScheduleModel.findByIdAndUpdate(
@@ -83,15 +109,23 @@ const updateSchedule = async (req, res) => {
           updatedSchedule,
           { new: true },
           (err, data) => {
-            res.status(200).json(data);
+            return res.status(200).json({
+              success: true,
+              message: "Schedule Updated",
+              data: { data },
+            });
           }
         );
       } catch (error) {
-        res.status(404).json({ message: error.message });
+        return res
+          .status(404)
+          .json({ success: false, message: error.message, data: {} });
       }
     }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -100,21 +134,33 @@ const deleteSchedule = async (req, res) => {
   const { userId } = req;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No Schedule with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const schedule = await ScheduleModel.findById(id);
     if (schedule.userId != userId) {
-      res.status(404).json({ message: "Invalid request" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       try {
         await ScheduleModel.findByIdAndRemove(id);
-        res.status(200).json({ message: "Schedule deleted successfully." });
+        return res.status(200).json({
+          success: true,
+          message: "Schedule deleted successfully",
+          data: {},
+        });
       } catch (error) {
-        res.status(404).json({ message: error.message });
+        return res
+          .status(404)
+          .json({ success: false, message: error.message, data: {} });
       }
     }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 

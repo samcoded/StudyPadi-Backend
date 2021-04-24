@@ -8,15 +8,9 @@ const getTimetables = async (req, res) => {
   try {
     const timetable = await TimetableModel.find({ userId });
 
-    return res.status(200).json({
-      success: true,
-      message: "User timetables retrieved",
-      data: { timetable },
-    });
+    res.status(200).json(timetable);
   } catch (error) {
-    return res
-      .status(404)
-      .json({ success: false, message: error.message, data: {} });
+    res.status(404).json({ message: error.message });
   }
 };
 
@@ -27,26 +21,16 @@ const getTimetable = async (req, res) => {
   const { userId } = req;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res
-      .status(404)
-      .json({ success: false, message: "Invalid ID", data: {} });
+    return res.status(404).send(`No Timetable with id: ${id}`);
   try {
     const timetable = await TimetableModel.findById(id);
     if (timetable.userId != userId) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Invalid Request", data: {} });
+      res.status(404).json({ message: "Invalid request" });
     } else {
-      return res.status(200).json({
-        success: 200,
-        message: "Timetable details retrieved",
-        data: { timetable },
-      });
+      res.status(200).json(timetable);
     }
   } catch (error) {
-    return res
-      .status(404)
-      .json({ success: false, message: error.message, data: {} });
+    res.status(404).json({ message: error.message });
   }
 };
 
@@ -64,9 +48,7 @@ const createTimetable = async (req, res) => {
   try {
     await timetableschema.validateAsync(timetable);
   } catch (error) {
-    return res
-      .status(400)
-      .json({ success: false, message: error.message, data: {} });
+    return res.status(400).send(error);
   }
   const newtimetable = new TimetableModel({
     ...timetable,
@@ -78,15 +60,9 @@ const createTimetable = async (req, res) => {
   try {
     await newtimetable.save();
 
-    return res.status(200).json({
-      success: true,
-      message: "Timetable created",
-      data: { newtimetable },
-    });
+    res.status(201).json(newtimetable);
   } catch (error) {
-    return res
-      .status(404)
-      .json({ success: false, message: error.message, data: {} });
+    res.status(409).json({ message: error.message });
   }
 };
 
@@ -96,16 +72,12 @@ const updateTimetable = async (req, res) => {
   const updatedTimetable = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res
-      .status(404)
-      .json({ success: false, message: "Invalid ID", data: {} });
+    return res.status(404).send(`No Timetable with id: ${id}`);
 
   try {
     const timetable = await TimetableModel.findById(id);
     if (timetable.userId != userId) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Invalid Request", data: {} });
+      res.status(404).json({ message: "Invalid request" });
     } else {
       try {
         await TimetableModel.findByIdAndUpdate(
@@ -113,24 +85,18 @@ const updateTimetable = async (req, res) => {
           updatedTimetable,
           { new: true },
           (err, data) => {
-            return res.status(200).json({
-              success: true,
-              message: "Timetable Updated",
-              data: { data },
-            });
+            res.status(200).json(data);
           }
         );
       } catch (error) {
-        return res
-          .status(404)
-          .json({ success: false, message: error.message, data: {} });
+        res.status(404).json({ message: error.message });
       }
     }
   } catch (error) {
-    return res
-      .status(404)
-      .json({ success: false, message: error.message, data: {} });
+    res.status(404).json({ message: error.message });
   }
+
+  // res.json(updatedTimetable);
 };
 
 const deleteTimetable = async (req, res) => {
@@ -138,33 +104,21 @@ const deleteTimetable = async (req, res) => {
   const { userId } = req;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res
-      .status(404)
-      .json({ success: false, message: "Invalid ID", data: {} });
+    return res.status(404).send(`No Timetable with id: ${id}`);
   try {
     const timetable = await TimetableModel.findById(id);
     if (timetable.userId != userId) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Invalid Request", data: {} });
+      res.status(404).json({ message: "Invalid request" });
     } else {
       try {
         await TimetableModel.findByIdAndRemove(id);
-        return res.status(200).json({
-          success: true,
-          message: "Timetable deleted successfully",
-          data: {},
-        });
+        res.status(200).json({ message: "Timetable deleted successfully." });
       } catch (error) {
-        return res
-          .status(404)
-          .json({ success: false, message: error.message, data: {} });
+        res.status(404).json({ message: error.message });
       }
     }
   } catch (error) {
-    return res
-      .status(404)
-      .json({ success: false, message: error.message, data: {} });
+    res.status(404).json({ message: error.message });
   }
 };
 

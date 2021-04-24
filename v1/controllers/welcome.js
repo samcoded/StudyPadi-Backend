@@ -1,5 +1,7 @@
 const home = (req, res) => {
-  res.send("WELCOME STUDYPADI API V1");
+  return res
+    .status(200)
+    .json({ success: true, message: "WELCOME STUDYPADI API V1", data: {} });
 };
 
 module.exports = home;

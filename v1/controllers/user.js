@@ -1,19 +1,18 @@
 const UserModel = require("../models/user.js");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const Joi = require("joi");
 const mongoose = require("mongoose");
-const crypto = require("crypto");
-require("dotenv").config();
-const upload = require("../middlewares/profileUpload.js");
-const sendMail = require("../middlewares/sendMail");
+const upload = require("../services/profileUpload.js");
+const login = require("../services/user/login");
+const register = require("../services/user/register");
+const Joi = require("joi");
 
-const jwtsecret = process.env.JWTSECRET;
+const {
+  changePassword,
+  resetToken,
+  checkResetToken,
+} = require("../services/user/password");
 
-const login = async (req, res) => {
+const loginUser = async (req, res) => {
   const { emailAddress, password } = req.body;
-
-  //validate
   const loginschema = Joi.object().keys({
     emailAddress: Joi.string().email().required(),
     password: Joi.string().required(),
@@ -22,27 +21,20 @@ const login = async (req, res) => {
   try {
     await loginschema.validateAsync(req.body);
   } catch (error) {
-    return res.status(400).send(error);
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 
-  try {
-    const oldUser = await UserModel.findOne({ emailAddress });
-    if (!oldUser) return res.status(400).send("This user doesnt exist");
-    const isPasswordCorrect = await bcrypt.compare(password, oldUser.password);
-    if (!isPasswordCorrect)
-      return res.status(400).json({ message: "Invalid credentials" });
-    const token = jwt.sign(
-      { emailAddress: oldUser.emailAddress, id: oldUser._id },
-      jwtsecret,
-      { expiresIn: "1h" }
-    );
-    res.status(200).json({ token, id: oldUser._id });
-  } catch (error) {
-    res.status(500).json({ message: "Something went wrong" });
-  }
+  let result = await login(emailAddress, password);
+  return res.status(result.code).json({
+    success: result.success,
+    message: result.message,
+    data: result.data,
+  });
 };
 
-const register = async (req, res) => {
+const registerUser = async (req, res) => {
   const {
     firstName,
     lastName,
@@ -51,7 +43,6 @@ const register = async (req, res) => {
     institution,
     course,
   } = req.body;
-
   const regschema = Joi.object().keys({
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
@@ -64,210 +55,85 @@ const register = async (req, res) => {
   try {
     await regschema.validateAsync(req.body);
   } catch (error) {
-    return res.status(400).send(error);
-  }
-
-  try {
-    const oldUser = await UserModel.findOne({ emailAddress });
-    if (oldUser) return res.status(400).send("This user already exists");
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const result = await UserModel.create({
-      emailAddress,
-      password: hashedPassword,
-      firstName,
-      lastName,
-      institution,
-      course,
-      timestamp: new Date().toISOString(),
-    });
-    const token = jwt.sign(
-      { emailAddress: result.emailAddress, id: result._id },
-      jwtsecret,
-      {
-        expiresIn: "1h",
-      }
-    );
-    res.status(201).json({ token, id: result._id });
-  } catch (error) {
-    res.status(500).json({ message: "Something went wrong" });
-
-    console.log(error);
-  }
-};
-
-const changePassword = async (req, res) => {
-  const { oldpassword, newpassword } = req.body;
-  const id = req.userId;
-  console.log(id);
-  try {
-    const user = await UserModel.findById(id);
-    const isPasswordCorrect = await bcrypt.compare(oldpassword, user.password);
-    if (!isPasswordCorrect)
-      return res.status(400).json({ message: "Invalid credentials" });
-
-    const hash = await bcrypt.hash(newpassword, 12);
-    try {
-      await UserModel.findByIdAndUpdate(
-        id,
-        { password: hash },
-        { new: true },
-        async () => {
-          //send mail that password has been reset
-
-          //delete token here
-          await UserModel.findByIdAndUpdate(
-            id,
-            { resetToken: "" },
-            { new: true }
-          );
-
-          //send success message
-          res.status(200).json({ message: "Password changed" });
-        }
-      );
-    } catch (error) {
-      res.status(404).json({ message: error.message });
-    }
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Something went wrong", error: error.message });
-  }
-};
-
-const setResetToken = async (req, res) => {
-  const { emailAddress } = req.body;
-
-  try {
-    const user = await UserModel.findOne({ emailAddress });
-    if (!user) return res.status(400).send("This user doesnt exist");
-
-    if (user.resetToken) {
-      //delete token
-      await UserModel.findByIdAndUpdate(
-        user._id,
-        { $unset: { resetToken: 1 } },
-        { new: true }
-      );
-    }
-
-    let resetToken = crypto.randomBytes(4).toString("hex");
-    const hash = await bcrypt.hash(resetToken, 12);
-
-    try {
-      await UserModel.findByIdAndUpdate(
-        user._id,
-        { $set: { resetToken: hash } },
-        { new: true },
-        (err, data) => {
-          if (err)
-            return res
-              .status(500)
-              .json({ message: "Something went wrong", error: err });
-        }
-      );
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ message: "Something went wrong", error: error.message });
-    }
-
-    //send mail with Token
-    let subject = "STUDYPADI PASSWORD RECOVERY";
-    let body = `<h1>PASSWORD RESET CODE</h1>
-    <h2>${resetToken}</h2>
-    <h3>Input code in the app to reset password</h3>`;
-
-    try {
-      await sendMail(emailAddress, subject, body);
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ message: "Something went wrong", error: error.message });
-    }
-
-    //send success
-    return res.status(200).json({
-      message: `Reset Token Sent Email Address ${emailAddress}`,
-    });
-  } catch (error) {
     return res
-      .status(500)
-      .json({ message: "Something went wrong", error: error.message });
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
+  let result = await register(
+    firstName,
+    lastName,
+    emailAddress,
+    password,
+    institution,
+    course
+  );
+  return res.status(result.code).json({
+    success: result.success,
+    message: result.message,
+    data: result.data,
+  });
 };
 
-const checkResetToken = async (req, res) => {
-  const { emailAddress, resetToken } = req.body;
-  let passwordResetToken = await UserModel.findOne({ emailAddress });
-  if (!passwordResetToken) {
-    res.status(404).json({ message: "Invalid request" });
-    //NO TOKEN AND SEND ERROR
-  }
-
-  const isValid = await bcrypt.compare(
-    resetToken,
-    passwordResetToken.resetToken
-  );
-
-  if (!isValid) {
-    res.status(404).json({ message: "Token invalid" });
-    //token not valid, send error
-  }
-  res.status(200).json({ message: "Token valid" });
+const changeUserPassword = async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const id = req.userId;
+  let result = await changePassword(id, oldPassword, newPassword);
+  return res.status(result.code).json({
+    success: result.success,
+    message: result.message,
+    data: result.data,
+  });
 };
 
-const resetPassword = async (req, res) => {
-  const { emailAddress, resetToken, password } = req.body;
-  let passwordResetToken = await UserModel.findOne({ emailAddress });
-  if (!passwordResetToken) {
-    res.status(404).json({ message: "Invalid request" });
-    //NO TOKEN AND SEND ERROR
-  }
-  const id = passwordResetToken._id;
-  const oldToken = passwordResetToken.resetToken;
-  if (!oldToken) return res.status(404).json({ message: "Invalid request" });
-  const isValid = await bcrypt.compare(
-    resetToken,
-    passwordResetToken.resetToken
-  );
+const passwordReset = async (req, res) => {
+  const { emailAddress } = req.body;
+  let result = await resetToken(emailAddress);
+  return res.status(result.code).json({
+    success: result.success,
+    message: result.message,
+    data: result.data,
+  });
+};
 
-  if (!isValid) {
-    res.status(404).json({ message: "Token invalid" });
-    //token not valid, send error
-  }
-
-  const hash = await bcrypt.hash(password, 12);
-
-  try {
+const checkResetCode = async (req, res) => {
+  const { emailAddress, resetCode } = req.body;
+  let result = await checkResetToken(emailAddress, resetCode);
+  return res.status(result.code).json({
+    success: result.success,
+    message: result.message,
+    data: result.data,
+  });
+};
+const passwordResetConfirm = async (req, res) => {
+  const { emailAddress, resetCode, password } = req.body;
+  let checkCode = await checkResetToken(emailAddress, resetCode);
+  if (checkCode.success) {
+    let result = await changePassword(checkCode.data.id, "none", password);
     await UserModel.findByIdAndUpdate(
-      id,
-      { password: hash },
-      { new: true },
-      async (err, data) => {
-        //send mail that password has been reset
-
-        //delete token here
-        await UserModel.findByIdAndUpdate(
-          id,
-          { $unset: { resetToken: 1 } },
-          { new: true }
-        );
-
-        //send success message
-        res.status(200).json({ message: "Password resetted" });
-      }
+      checkCode.data.id,
+      { $unset: { resetToken: 1 } },
+      { new: true }
     );
-  } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res.status(result.code).json({
+      success: result.success,
+      message: result.message,
+      data: result.data,
+    });
   }
+  return res.status(checkCode.code).json({
+    success: checkCode.success,
+    message: checkCode.message,
+    data: checkCode.data,
+  });
 };
 
 const getUser = async (req, res) => {
   const id = req.userId;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No user with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
 
   try {
     const user = await UserModel.findById(id);
@@ -291,9 +157,15 @@ const getUser = async (req, res) => {
       timestamp,
       _id,
     };
-    res.status(200).json(userdetails);
+    return res.status(200).json({
+      success: true,
+      message: "User details retrieved",
+      data: { userdetails },
+    });
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -302,7 +174,9 @@ const updateUser = async (req, res) => {
   const updatedUser = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).send(`No task with id: ${id}`);
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
 
   try {
     await UserModel.findByIdAndUpdate(
@@ -330,29 +204,44 @@ const updateUser = async (req, res) => {
           timestamp,
           _id,
         };
-        res.status(200).json(userdetails);
+        return res.status(200).json({
+          success: true,
+          message: "User details updated",
+          data: { userdetails },
+        });
       }
     );
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
 const uploadProfilePic = async (req, res) => {
   const id = req.userId;
+
   const singleUpload = upload.single("image");
 
-  singleUpload(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ error: err.message });
+  singleUpload(req, res, async (error) => {
+    if (error) {
+      return res
+        .status(400)
+        .json({ success: false, message: error.message, data: {} });
     }
 
-    let update = { photoUrl: req.file.location };
     try {
+      let update = { photoUrl: req.file.location };
       await UserModel.findByIdAndUpdate(id, update, { new: true });
-      res.status(200).json(update);
-    } catch (err) {
-      res.status(400).json({ error: err.message });
+      return res.status(200).json({
+        success: true,
+        message: "Profile Picture Updatted",
+        data: { update },
+      });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ success: false, message: error.message, data: {} });
     }
   });
 };
@@ -360,7 +249,10 @@ const uploadProfilePic = async (req, res) => {
 const addBadge = async (req, res) => {
   const id = req.userId;
   const { badge } = req.body;
-  if (!badge) return res.status(404).json({ message: "Invalid request" });
+  if (!badge)
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid request", data: {} });
 
   try {
     const user = await UserModel.findById(id);
@@ -371,7 +263,9 @@ const addBadge = async (req, res) => {
     });
 
     if (badgeArray.includes(badge))
-      return res.status(404).json({ message: "Badge already exist" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Badge already exist", data: {} });
 
     const newBadge = { task: badge };
     try {
@@ -380,14 +274,18 @@ const addBadge = async (req, res) => {
         { $push: { badges: newBadge } },
         { new: true }
       );
-      res.status(200).json({ message: `${badge} Badge added` });
-    } catch (err) {
-      res.status(400).json({ error: err.message });
+      return res
+        .status(200)
+        .json({ success: true, message: `${badge} Badge added`, data: {} });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ success: false, message: err.message, data: {} });
     }
   } catch (error) {
-    res
+    return res
       .status(500)
-      .json({ message: "Something went wrong", error: error.message });
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
@@ -397,24 +295,28 @@ const getBadges = async (req, res) => {
   try {
     const user = await UserModel.findById(id);
 
-    res.status(200).json(user.badges);
+    return res.status(200).json({
+      success: true,
+      message: "User badges retrieved",
+      data: user.badges,
+    });
   } catch (error) {
-    res
+    return res
       .status(500)
-      .json({ message: "Something went wrong", error: error.message });
+      .json({ success: false, message: error.message, data: {} });
   }
 };
 
 module.exports = {
-  login,
-  register,
+  loginUser,
+  registerUser,
   getUser,
   updateUser,
+  changeUserPassword,
+  passwordReset,
+  checkResetCode,
+  passwordResetConfirm,
   uploadProfilePic,
-  changePassword,
-  setResetToken,
-  checkResetToken,
-  resetPassword,
   addBadge,
   getBadges,
 };
