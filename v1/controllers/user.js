@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const crypto = require("crypto");
 require("dotenv").config();
 const upload = require("../middlewares/profileUpload.js");
+const sendMail = require("../middlewares/sendMail");
 
 const jwtsecret = process.env.JWTSECRET;
 
@@ -150,7 +151,7 @@ const setResetToken = async (req, res) => {
       );
     }
 
-    let resetToken = crypto.randomBytes(32).toString("hex");
+    let resetToken = crypto.randomBytes(4).toString("hex");
     const hash = await bcrypt.hash(resetToken, 12);
 
     try {
@@ -166,21 +167,31 @@ const setResetToken = async (req, res) => {
         }
       );
     } catch (error) {
-      res
+      return res
         .status(500)
         .json({ message: "Something went wrong", error: error.message });
     }
-    // const link = `${clientURL}/passwordReset?token=${resetToken}&id=${user._id}`;
-    console.log(resetToken);
-    console.log(emailAddress);
+
     //send mail with Token
+    let subject = "STUDYPADI PASSWORD RECOVERY";
+    let body = `<h1>PASSWORD RESET CODE</h1>
+    <h2>${resetToken}</h2>
+    <h3>Input code in the app to reset password</h3>`;
+
+    try {
+      await sendMail(emailAddress, subject, body);
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Something went wrong", error: error.message });
+    }
 
     //send success
-    res.status(200).json({
-      message: `Reset Token Sent Email Address ${emailAddress} and reset Token ${resetToken}`,
+    return res.status(200).json({
+      message: `Reset Token Sent Email Address ${emailAddress}`,
     });
   } catch (error) {
-    res
+    return res
       .status(500)
       .json({ message: "Something went wrong", error: error.message });
   }
