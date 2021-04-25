@@ -13,6 +13,15 @@ const verifyToken = async (req, res, next) => {
         .json({ success: false, message: "Unauthorized request", data: {} });
 
     decodedtoken = jwt.verify(token, jwtsecret);
+
+    if (decodedtoken?.admin.status) {
+      req.adminRole = decodedtoken?.admin.role;
+      req.adminId = decodedtoken?.id;
+
+      //run a check if admin active
+
+      next();
+    }
     req.userId = decodedtoken?.id;
     next();
   } catch (error) {

@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 const Joi = require("joi");
 
 const getTimetables = async (req, res) => {
-  const { userId } = req;
+  const id = req.userId || req.params.id;
 
   try {
-    const timetable = await TimetableModel.find({ userId });
+    const timetable = await TimetableModel.find({ userId: id });
 
     return res.status(200).json({
       success: true,
@@ -32,13 +32,13 @@ const getTimetable = async (req, res) => {
       .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const timetable = await TimetableModel.findById(id);
-    if (timetable.userId != userId) {
+    if (timetable.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       return res.status(200).json({
-        success: 200,
+        success: true,
         message: "Timetable details retrieved",
         data: { timetable },
       });
@@ -102,7 +102,7 @@ const updateTimetable = async (req, res) => {
 
   try {
     const timetable = await TimetableModel.findById(id);
-    if (timetable.userId != userId) {
+    if (timetable.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });
@@ -143,7 +143,7 @@ const deleteTimetable = async (req, res) => {
       .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const timetable = await TimetableModel.findById(id);
-    if (timetable.userId != userId) {
+    if (timetable.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });

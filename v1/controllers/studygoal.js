@@ -1,12 +1,12 @@
-const StudygoalModel = require("../models/schedule.js");
+const StudygoalModel = require("../models/studygoal.js");
 const mongoose = require("mongoose");
 const Joi = require("joi");
 
 const getStudygoals = async (req, res) => {
-  const { userId } = req;
+  const id = req.userId || req.params.id;
 
   try {
-    const studygoal = await StudygoalModel.find({ userId });
+    const studygoal = await StudygoalModel.find({ userId: id });
     return res.status(200).json({
       success: true,
       message: "User studygoals retrieved",
@@ -31,13 +31,13 @@ const getStudygoal = async (req, res) => {
       .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const studygoal = await StudygoalModel.findById(id);
-    if (studygoal.userId != userId) {
+    if (studygoal.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       return res.status(200).json({
-        success: 200,
+        success: true,
         message: "Studygoal details retrieved",
         data: { studygoal },
       });
@@ -99,7 +99,7 @@ const updateStudygoal = async (req, res) => {
 
   try {
     const studygoal = await StudygoalModel.findById(id);
-    if (studygoal.userId != userId) {
+    if (studygoal.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });
@@ -140,7 +140,7 @@ const checkStudygoal = async (req, res) => {
       .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const studygoal = await StudygoalModel.findById(id);
-    if (studygoal.userId != userId) {
+    if (studygoal.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });
@@ -185,7 +185,7 @@ const deleteStudygoal = async (req, res) => {
       .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const studygoal = await StudygoalModel.findById(id);
-    if (studygoal.userId != userId) {
+    if (studygoal.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });

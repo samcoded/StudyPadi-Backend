@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 const Joi = require("joi");
 
 const getTasks = async (req, res) => {
-  const { userId } = req;
+  const id = req.userId || req.params.id;
 
   try {
-    const task = await TaskModel.find({ userId });
+    const task = await TaskModel.find({ userId: id });
 
     return res.status(200).json({
       success: true,
@@ -32,13 +32,13 @@ const getTask = async (req, res) => {
       .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const task = await TaskModel.findById(id);
-    if (task.userId != userId) {
+    if (task.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       return res.status(200).json({
-        success: 200,
+        success: true,
         message: "Task details retrieved",
         data: { task },
       });
@@ -101,7 +101,7 @@ const updateTask = async (req, res) => {
 
   try {
     const task = await TaskModel.findById(id);
-    if (task.userId != userId) {
+    if (task.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });
@@ -142,7 +142,7 @@ const checkTask = async (req, res) => {
       .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const task = await TaskModel.findById(id);
-    if (task.userId != userId) {
+    if (task.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });
@@ -187,7 +187,7 @@ const deleteTask = async (req, res) => {
       .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const task = await TaskModel.findById(id);
-    if (task.userId != userId) {
+    if (task.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });

@@ -1,12 +1,12 @@
-const ScheduleModel = require("../models/studygoal.js");
+const ScheduleModel = require("../models/schedule.js");
 const mongoose = require("mongoose");
 const Joi = require("joi");
 
 const getSchedules = async (req, res) => {
-  const { userId } = req;
+  const id = req.userId || req.params.id;
 
   try {
-    const schedule = await ScheduleModel.find({ userId });
+    const schedule = await ScheduleModel.find({ userId: id });
 
     return res.status(200).json({
       success: true,
@@ -32,13 +32,13 @@ const getSchedule = async (req, res) => {
       .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const schedule = await ScheduleModel.findById(id);
-    if (schedule.userId != userId) {
+    if (schedule.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });
     } else {
       return res.status(200).json({
-        success: 200,
+        success: true,
         message: "Schedule details retrieved",
         data: { schedule },
       });
@@ -98,7 +98,7 @@ const updateSchedule = async (req, res) => {
 
   try {
     const schedule = await ScheduleModel.findById(id);
-    if (schedule.userId != userId) {
+    if (schedule.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });
@@ -139,7 +139,7 @@ const deleteSchedule = async (req, res) => {
       .json({ success: false, message: "Invalid ID", data: {} });
   try {
     const schedule = await ScheduleModel.findById(id);
-    if (schedule.userId != userId) {
+    if (schedule.userId != userId || !req.adminRole) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Request", data: {} });

@@ -76,7 +76,7 @@ const registerUser = async (req, res) => {
 
 const changeUserPassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  const id = req.userId;
+  const id = req.params.id || req.userId;
   let result = await changePassword(id, oldPassword, newPassword);
   return res.status(result.code).json({
     success: result.success,
@@ -127,8 +127,80 @@ const passwordResetConfirm = async (req, res) => {
   });
 };
 
+const getAllUsers = async (req, res) => {
+  if (!req.adminRole) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Unauthorised Request", data: {} });
+  }
+  try {
+    const user = await UserModel.find();
+    const {
+      emailAddress,
+      firstName,
+      lastName,
+      institution,
+      course,
+      photoUrl,
+      timestamp,
+      _id,
+    } = user;
+    const userdetails = {
+      emailAddress,
+      firstName,
+      lastName,
+      institution,
+      course,
+      photoUrl,
+      timestamp,
+      _id,
+    };
+    return res.status(200).json({
+      success: true,
+      message: "All users details retrieved",
+      data: { userdetails },
+    });
+  } catch (error) {
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  const id = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
+  try {
+    if (!req.adminRole) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Unauthorised Request", data: {} });
+    }
+    try {
+      await UserModel.findByIdAndRemove(id);
+      return res.status(200).json({
+        success: true,
+        message: "User deleted successfully",
+        data: {},
+      });
+    } catch (error) {
+      return res
+        .status(404)
+        .json({ success: false, message: error.message, data: {} });
+    }
+  } catch (error) {
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
+  }
+};
+
 const getUser = async (req, res) => {
-  const id = req.userId;
+  const id = req.params.id || req.userId;
 
   if (!mongoose.Types.ObjectId.isValid(id))
     return res
@@ -170,7 +242,7 @@ const getUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-  const id = req.userId;
+  const id = req.params.id || req.userId;
   const updatedUser = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
@@ -219,7 +291,7 @@ const updateUser = async (req, res) => {
 };
 
 const uploadProfilePic = async (req, res) => {
-  const id = req.userId;
+  const id = req.params.id || req.userId;
 
   const singleUpload = upload.single("image");
 
@@ -247,7 +319,7 @@ const uploadProfilePic = async (req, res) => {
 };
 
 const addBadge = async (req, res) => {
-  const id = req.userId;
+  const id = req.params.id || req.userId;
   const { badge } = req.body;
   if (!badge)
     return res
@@ -290,7 +362,7 @@ const addBadge = async (req, res) => {
 };
 
 const getBadges = async (req, res) => {
-  const id = req.userId;
+  const id = req.params.id || req.userId;
 
   try {
     const user = await UserModel.findById(id);
@@ -310,8 +382,10 @@ const getBadges = async (req, res) => {
 module.exports = {
   loginUser,
   registerUser,
+  getAllUsers,
   getUser,
   updateUser,
+  deleteUser,
   changeUserPassword,
   passwordReset,
   checkResetCode,
