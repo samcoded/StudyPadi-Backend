@@ -100,7 +100,6 @@ const resetToken = async (emailAddress) => {
     let body = `<h1>PASSWORD RESET CODE</h1>
     <h2>${resetToken}</h2>
     <h3>Input code in the app to reset password</h3>`;
-    console.log(resetToken);
     try {
       await sendMail(emailAddress, subject, body);
     } catch (error) {
