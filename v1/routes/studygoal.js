@@ -8,7 +8,7 @@ const {
   checkStudygoal,
   deleteStudygoal,
 } = require("../controllers/studygoal.js");
-const { verifyToken } = require("../middlewares/verifyToken");
+const { verifyToken } = require("../middlewares/verify");
 
 router.get("/", verifyToken, getStudygoals);
 router.get("/:id", verifyToken, getStudygoal);

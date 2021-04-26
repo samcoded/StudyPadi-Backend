@@ -127,78 +127,26 @@ const passwordResetConfirm = async (req, res) => {
   });
 };
 
-const getAllUsers = async (req, res) => {
-  if (!req.adminRole) {
+const getUsers = async (req, res) => {
+  if (!req.adminRole)
     return res
       .status(404)
       .json({ success: false, message: "Unauthorised Request", data: {} });
-  }
+
   try {
-    const user = await UserModel.find();
-    const {
-      emailAddress,
-      firstName,
-      lastName,
-      institution,
-      course,
-      photoUrl,
-      timestamp,
-      _id,
-    } = user;
-    const userdetails = {
-      emailAddress,
-      firstName,
-      lastName,
-      institution,
-      course,
-      photoUrl,
-      timestamp,
-      _id,
-    };
+    const user = await UserModel.find({}, { password: 0, resetToken: 0 });
+
     return res.status(200).json({
       success: true,
       message: "All users details retrieved",
-      data: { userdetails },
+      data: user,
     });
   } catch (error) {
     return res
-      .status(404)
+      .status(500)
       .json({ success: false, message: error.message, data: {} });
   }
 };
-
-const deleteUser = async (req, res) => {
-  const id = req.params.id;
-
-  if (!mongoose.Types.ObjectId.isValid(id))
-    return res
-      .status(404)
-      .json({ success: false, message: "Invalid ID", data: {} });
-  try {
-    if (!req.adminRole) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Unauthorised Request", data: {} });
-    }
-    try {
-      await UserModel.findByIdAndRemove(id);
-      return res.status(200).json({
-        success: true,
-        message: "User deleted successfully",
-        data: {},
-      });
-    } catch (error) {
-      return res
-        .status(404)
-        .json({ success: false, message: error.message, data: {} });
-    }
-  } catch (error) {
-    return res
-      .status(404)
-      .json({ success: false, message: error.message, data: {} });
-  }
-};
-
 const getUser = async (req, res) => {
   const id = req.params.id || req.userId;
 
@@ -234,6 +182,37 @@ const getUser = async (req, res) => {
       message: "User details retrieved",
       data: { userdetails },
     });
+  } catch (error) {
+    return res
+      .status(404)
+      .json({ success: false, message: error.message, data: {} });
+  }
+};
+const deleteUser = async (req, res) => {
+  const id = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID", data: {} });
+  try {
+    if (!req.adminRole) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Unauthorised Request", data: {} });
+    }
+    try {
+      await UserModel.findByIdAndRemove(id);
+      return res.status(200).json({
+        success: true,
+        message: "User deleted successfully",
+        data: {},
+      });
+    } catch (error) {
+      return res
+        .status(404)
+        .json({ success: false, message: error.message, data: {} });
+    }
   } catch (error) {
     return res
       .status(404)
@@ -382,7 +361,7 @@ const getBadges = async (req, res) => {
 module.exports = {
   loginUser,
   registerUser,
-  getAllUsers,
+  getUsers,
   getUser,
   updateUser,
   deleteUser,

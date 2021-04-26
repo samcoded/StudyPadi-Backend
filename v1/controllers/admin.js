@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const jwtsecret = process.env.JWTSECRET;
+const jwtexpires = process.env.JWTEXPIRES;
 
 const loginAdmin = async (req, res) => {
   const { emailAddress, password } = req.body;
@@ -45,10 +46,10 @@ const loginAdmin = async (req, res) => {
       {
         emailAddress: oldAdmin.emailAddress,
         id: oldAdmin._id,
-        admin: { status: true, role: oldAdmin.role },
+        admin: true,
       },
       jwtsecret,
-      { expiresIn: "30d" }
+      { expiresIn: jwtexpires }
     );
     return res.status(200).json({
       success: true,
@@ -105,11 +106,11 @@ const registerAdmin = async (req, res) => {
       {
         emailAddress: result.emailAddress,
         id: result._id,
-        admin: { status: true, role: result.role },
+        admin: true,
       },
       jwtsecret,
       {
-        expiresIn: "30d",
+        expiresIn: jwtexpires,
       }
     );
     return res.status(200).json({
@@ -179,36 +180,18 @@ const getAllAdmins = async (req, res) => {
       .status(404)
       .json({ success: false, message: "Unauthorised Request", data: {} });
   }
+
   try {
-    const admin = await AdminModel.find();
-    const {
-      emailAddress,
-      firstName,
-      lastName,
-      institution,
-      course,
-      photoUrl,
-      timestamp,
-      _id,
-    } = admin;
-    const admindetails = {
-      emailAddress,
-      firstName,
-      lastName,
-      institution,
-      course,
-      photoUrl,
-      timestamp,
-      _id,
-    };
+    const admin = await AdminModel.find({}, { password: 0 });
+
     return res.status(200).json({
       success: true,
       message: "All admins details retrieved",
-      data: { admindetails },
+      data: admin,
     });
   } catch (error) {
     return res
-      .status(404)
+      .status(500)
       .json({ success: false, message: error.message, data: {} });
   }
 };
@@ -312,6 +295,81 @@ const updateAdmin = async (req, res) => {
   }
 };
 
+const activateAdmin = async (req, res) => {
+  const id = req.params.id || req.adminId;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid ID", data: {} });
+
+  try {
+    let admin = await AdminModel.findById({ _id: id });
+    let check = !admin.active;
+    let response = "";
+    if (check) {
+      response = "Admin activated";
+    } else {
+      response = "Admin deactivated";
+    }
+    await AdminModel.findByIdAndUpdate(
+      id,
+      { active: check },
+      { new: true },
+      (err, data) => {
+        return res.status(200).json({
+          success: true,
+          message: response,
+          data: {},
+        });
+      }
+    );
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: error.message, data: {} });
+  }
+};
+
+const roleAdmin = async (req, res) => {
+  const id = req.params.id || req.adminId;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid ID", data: {} });
+
+  try {
+    let admin = await AdminModel.findById({ _id: id });
+    let response = "";
+    let role = "";
+    if (admin.role == 1) {
+      role = 2;
+      response = "Upgraded admin privileges";
+    } else if (admin.role == 2) {
+      role = 1;
+      response = "Downgraded admin privileges";
+    }
+
+    await AdminModel.findByIdAndUpdate(
+      id,
+      { role },
+      { new: true },
+      (err, data) => {
+        return res.status(200).json({
+          success: true,
+          message: response,
+          data: {},
+        });
+      }
+    );
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: error.message, data: {} });
+  }
+};
+
 module.exports = {
   loginAdmin,
   registerAdmin,
@@ -320,4 +378,6 @@ module.exports = {
   changeAdminPassword,
   getAllAdmins,
   deleteAdmin,
+  activateAdmin,
+  roleAdmin,
 };

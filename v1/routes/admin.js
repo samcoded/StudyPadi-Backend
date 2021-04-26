@@ -8,15 +8,35 @@ const {
   updateAdmin,
   deleteAdmin,
   changeAdminPassword,
+  activateAdmin,
+  roleAdmin,
 } = require("../controllers/admin.js");
-const { verifyToken } = require("../middlewares/verifyToken.js");
+const {
+  verifyToken,
+  verifyAdmin,
+  verifySuperAdmin,
+} = require("../middlewares/verify.js");
 
 router.post("/login", loginAdmin);
-router.post("/register", registerAdmin);
-router.get("/:id", verifyToken, getAdmin);
-router.get("/", verifyToken, getAllAdmins); //Super admin exclusive
-router.patch("/", verifyToken, updateAdmin);
-router.delete("/:id", verifyToken, deleteAdmin); //Super admin exclusive
-router.post("/changepassword", verifyToken, changeAdminPassword);
+
+//LOGGED IN ADMINS
+router.get("/", verifyToken, verifyAdmin, getAdmin);
+router.patch("/", verifyToken, verifyAdmin, updateAdmin);
+router.post("/changepassword", verifyToken, verifyAdmin, changeAdminPassword);
+
+//SUPER ADMIN
+router.post("/register", verifyToken, verifySuperAdmin, registerAdmin);
+router.get("/:id", verifyToken, verifyAdmin, getAdmin);
+router.get("/all", verifyToken, verifySuperAdmin, getAllAdmins);
+router.patch("/:id", verifyToken, verifyAdmin, updateAdmin);
+router.get("/activate/:id", verifyToken, verifySuperAdmin, activateAdmin);
+router.get("/changerole/:id", verifyToken, verifySuperAdmin, roleAdmin);
+router.post(
+  "/changepassword/:id",
+  verifyToken,
+  verifySuperAdmin,
+  changeAdminPassword
+);
+router.delete("/:id", verifyToken, verifySuperAdmin, deleteAdmin);
 
 module.exports = router;

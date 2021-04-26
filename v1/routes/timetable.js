@@ -7,7 +7,7 @@ const {
   updateTimetable,
   deleteTimetable,
 } = require("../controllers/timetable.js");
-const { verifyToken } = require("../middlewares/verifyToken");
+const { verifyToken } = require("../middlewares/verify");
 
 router.get("/", verifyToken, getTimetables);
 router.get("/:id", verifyToken, getTimetable);

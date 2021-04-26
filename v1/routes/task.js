@@ -8,7 +8,7 @@ const {
   checkTask,
   deleteTask,
 } = require("../controllers/task.js");
-const { verifyToken } = require("../middlewares/verifyToken");
+const { verifyToken } = require("../middlewares/verify");
 
 router.get("/", verifyToken, getTasks);
 router.get("/:id", verifyToken, getTask);

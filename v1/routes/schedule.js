@@ -7,7 +7,7 @@ const {
   updateSchedule,
   deleteSchedule,
 } = require("../controllers/schedule.js");
-const { verifyToken } = require("../middlewares/verifyToken");
+const { verifyToken } = require("../middlewares/verify");
 
 router.get("/", verifyToken, getSchedules);
 router.get("/:id", verifyToken, getSchedule);
