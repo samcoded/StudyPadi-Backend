@@ -49,7 +49,7 @@ const googleProcessData = async (req, res) => {
     const oldUser = await UserModel.findOne({ emailAddress });
     if (oldUser) {
       let result = await login(oldUser.emailAddress, null);
-      res.status(result.code).json({
+      return res.status(result.code).json({
         success: result.success,
         message: result.message,
         data: result.data,
@@ -58,7 +58,7 @@ const googleProcessData = async (req, res) => {
 
     const password = crypto.randomBytes(5).toString("hex");
     let result = await register(firstName, lastName, emailAddress, password);
-    res.status(result.code).json({
+    return res.status(result.code).json({
       success: result.success,
       message: result.message,
       data: result.data,
@@ -81,7 +81,7 @@ const facebookProcessData = async (req, res) => {
     const oldUser = await UserModel.findOne({ emailAddress });
     if (oldUser) {
       let result = await login(oldUser.emailAddress, null);
-      res.status(result.code).json({
+      return res.status(result.code).json({
         success: result.success,
         message: result.message,
         data: result.data,
@@ -90,7 +90,7 @@ const facebookProcessData = async (req, res) => {
 
     const password = crypto.randomBytes(5).toString("hex");
     let result = await register(firstName, lastName, emailAddress, password);
-    res.status(result.code).json({
+    return res.status(result.code).json({
       success: result.success,
       message: result.message,
       data: result.data,
